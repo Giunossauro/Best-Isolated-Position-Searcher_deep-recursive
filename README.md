@@ -1,3 +1,3 @@
 # Best Isolated Position Searcher
-It searches for positions in array that are far away of any other found and that satisfy some condition(s)
+It searches for positions in array that are far away of any other found and that satisfy some condition(s)<br>
 Uses recursion...
