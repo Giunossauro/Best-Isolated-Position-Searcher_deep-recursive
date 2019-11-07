@@ -2,12 +2,13 @@
  * Author: Giuliano Mitteroheffer Morelli
  * Name: Best Isolated Position Searcher
  * Purpose: searches for positions in array that are far away of any other found and that satisfy some condition(s)
- * Language: C
+ * Language: C++
  */
 
  //headers
 #include <stdio.h>
 #include <conio.h>
+#include <fstream>
 
 //random data I created
 #define T 3000000
@@ -16,14 +17,14 @@
 void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigned int& cycle, unsigned short int& condition,
 	unsigned int* startPointPosition, unsigned int* positionCounter, unsigned int* aboveLevelCounterReminder,
 	unsigned int* belowLevelCounterReminder, unsigned short int* whereToSearchForCondition, bool& found,
-	unsigned char& loopRecyclableVariable, bool* positionOfFound);
+	unsigned char& loopRecyclableVariable, bool* positionOfFound, unsigned int* testOrder);
 
 //function prototype to run the cycle
 void runCycle(unsigned int level, unsigned int& aux, unsigned int& cycle, unsigned short int& condition,
 	unsigned int* startPointPosition, unsigned int* positionCounter, unsigned int* aboveLevelCounterReminder,
 	unsigned int* belowLevelCounterReminder, unsigned short int* whereToSearchForCondition, bool& found,
 	unsigned char& loopRecyclableVariable, bool* positionOfFound, unsigned int* positionCounterAux, unsigned int* startPointPositionAux,
-	unsigned int& x, unsigned int& y, unsigned int& z);
+	unsigned int& x, unsigned int& y, unsigned int& z, unsigned int* testOrder);
 
 int main() {
 
@@ -71,12 +72,13 @@ int main() {
 
 	//this bool array stores position of found best isolated conditions
 	bool* positionOfFound;
-	
+
 	//aux for sorting positionCounter and startPointPosition
 	unsigned int* positionCounterAux;
 	unsigned int* startPointPositionAux;
 
-
+	//to test the order traveled in recursion, if you want
+	unsigned int* testOrder;
 
 	/*
 	INITIALIZING AND POPULATING (most with random data, few just initializing, some already initialized)
@@ -89,7 +91,7 @@ int main() {
 
 	cycle = 1;
 
-	condition = 500;
+	condition = 500; //recursion will search for this condition
 
 	found = false;
 
@@ -97,43 +99,35 @@ int main() {
 
 	whereToSearchForCondition = new unsigned short int[T];
 
+	testOrder = new unsigned int[T];
+
 	for (x = 0; x < T; x++) {
 		positionOfFound[x] = false;
 	}
 
 	for (x = 0; x < T; x++) {
-
-		//can be any other number, just habe to be different from condition to prove this algorithim
+		//can be any other number, just have to be different from condition to prove this algorithim
 		whereToSearchForCondition[x] = 499;
 	}
 
 	printf("Take note where are the 5 positions of condition:\n");
-	//y store seed to put 5 (z) satisfiable conditions
-	y = 145857;
-	z = 5;
+	//y store 5 (size of z variable - 1) satisfiable conditions
+	y = 145857; //random
+	z = 6;
 	for (x = 0; x < T; x++) {
-		if (y == x) {
-			whereToSearchForCondition[x] = 500;
-			y += y;
+		if (y == x && z > 0) {
+			whereToSearchForCondition[x] = condition;
+			y += y; //random
 			printf("found condition at: %u position\n", x);
 			z--;
 		}
+		testOrder[x] = 0; //populating testOrder array
 	}
 	printf("\nType any key to continue...\n");
-	//x = _getch();
-
-	//no reason for recursion (will not run, here "x" dont allow, because this part is to you seed with your data) 
-	if (cycle == 1 && x == 0) {
-		for (x = 0; x < T; x++) {
-			if (whereToSearchForCondition[x] == condition) {
-				positionOfFound[x] = true;
-			}
-		}
-	}
+	x = _getch();
 
 	//have reason for recursion (same of first if)
-	else if (cycle > 1) {
-
+	if (cycle > 1) {
 
 		for (x = 0; x < T; x++) {
 			positionOfFound[x] = true ? cycle++ : 0;
@@ -152,7 +146,7 @@ int main() {
 
 		//the function below will run cycle
 		runCycle(0, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder,
-			whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, positionCounterAux, startPointPositionAux, x, y, z);
+			whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, positionCounterAux, startPointPositionAux, x, y, z, testOrder);
 	}
 
 	//here will run to test this program
@@ -161,19 +155,21 @@ int main() {
 		//where hypothetically other conditions was hypothetically already found
 		positionOfFound[0] = true;
 		positionOfFound[599999] = true;
+
+		//here, at 1166856 position, has to be the BIP
+
 		positionOfFound[1599999] = true;
 		positionOfFound[1799999] = true;
 		positionOfFound[2399999] = true;
 		positionOfFound[T - 1] = true;
 
+		//this will simulate that this is the 7th cicle - as we already found 6 positions
 		for (x = 0; x < T; x++) {
 			positionOfFound[x] == true ? cycle++ : 0;
 		}
 
-		printf("oi");
-
 		//for a short time, aux take value considering if none or any of both or both extremities is true, because there's no way to search under 0 or above T - 1
-		positionOfFound[0] == true ? positionOfFound[T - 1] == true ? aux = cycle - 1 : aux = cycle : positionOfFound[T - 1] == true ? aux = cycle : aux = cycle + 1;
+		positionOfFound[0] == true ? positionOfFound[T - 1] == true ? aux = cycle - 2 : aux = cycle : positionOfFound[T - 1] == true ? aux = cycle : aux = cycle + 1;
 
 		//alocating memory in heap
 		positionCounter = new unsigned int[aux];
@@ -185,18 +181,135 @@ int main() {
 
 		//as this is the 7th cycle searching for the 7th Best Isolated Position, considering data above
 		runCycle(0, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder,
-			whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, positionCounterAux, startPointPositionAux, x, y, z);
+			whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, positionCounterAux, startPointPositionAux, x, y, z, testOrder);
 
 	}
 
 	return 0;
 }
 
+
+
+void runCycle(unsigned int level, unsigned int& aux, unsigned int& cycle, unsigned short int& condition,
+unsigned int* startPointPosition, unsigned int* positionCounter, unsigned int* aboveLevelCounterReminder,
+unsigned int* belowLevelCounterReminder, unsigned short int* whereToSearchForCondition, bool& found,
+unsigned char& loopRecyclableVariable, bool* positionOfFound, unsigned int* positionCounterAux, unsigned int* startPointPositionAux,
+unsigned int& x, unsigned int& y, unsigned int& z, unsigned int* testOrder) {
+
+	//initializing
+	for (x = 0; x < aux - 1; x++) {
+		belowLevelCounterReminder[x] = 0;
+		aboveLevelCounterReminder[x] = 0;
+	}
+
+	//searching for all startingPointPosition and for all half distances (positionCounter) between positionOfFound (storing in aux versions)
+	unsigned int aux1, aux2, aux3;
+	aux1 = 0;
+	aux2 = 0;
+	aux3 = 0;
+	for (x = 0; x < T; x++) {
+		if (positionOfFound[x] == true) {
+			if (x == T - 1) {
+				if (aux1 % 2 == 0) {
+					aux1--;
+				}
+			}
+			aux2 = aux1 / 2;
+			aux1 = 0;
+			if (x != 0) {
+				startPointPositionAux[aux3] = x - aux2;
+				positionCounterAux[aux3] = aux2;
+				aux3++;
+				//printf("\n a %u\n", aux2); - save it for eventual debugging
+				//printf("%u\n\n", x - aux2); - save it for eventual debugging
+			}
+		}
+		else {
+			aux1++;
+		}
+	}
+
+	//algorithim to consistently sorting positionCounter and startPointPosition (still using aux versions)
+	x = 1;
+	//aux -= 2; - I dont know why save this, but...
+	while (x < aux) {
+		x = 3 * x + 1;
+	}
+	while (x > 0) {
+		for (aux1 = x; aux1 < aux; aux1++) {
+			y = positionCounterAux[aux1];
+			z = startPointPositionAux[aux1];
+			aux2 = aux1;
+			while (aux2 > x - 1 && y <= positionCounterAux[aux2 - x]) {
+				positionCounterAux[aux2] = positionCounterAux[aux2 - x];
+				startPointPositionAux[aux2] = startPointPositionAux[aux2 - x];
+				aux2 = aux2 - x;
+			}
+			positionCounterAux[aux2] = y;
+			startPointPositionAux[aux2] = z;
+		}
+		x = x / 3;
+	}
+	//aux += 2;
+
+	/* //save this for eventual debugging
+	for (x = 0; x < aux; x++) {
+		y = positionCounterAux[x];
+		printf("%u\n", y);
+
+		y = startPointPositionAux[x];
+		printf("%u\n\n", y);
+	}
+	printf("\n\n\n");*/
+
+
+	//storing in "oficial" version of arrays (reason of use of aux versions)
+	for (x = 0, y = aux - 1; x < aux; x++, y--) {
+		positionCounter[x] = positionCounterAux[y];
+		startPointPosition[x] = startPointPositionAux[y];
+		//printf("%u\n", positionCounter[x]); -save it for eventual debugging
+		//printf("%u\n\n", startPointPosition[x]); -save it for eventual debugging
+	}
+
+	//no more need of aux versions
+	delete[] startPointPositionAux;
+	delete[] positionCounterAux;
+
+	//here "x" will save cycle...
+	x = cycle;
+
+	//...because:
+	cycle = aux - 1;
+
+	//and cycle will fit in the math of recursion! - RECURSION
+	printf("Before recursion\n...\n");
+
+	bestIsolatedPositionSearcher(0, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder,
+		whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, testOrder);
+
+	printf("After recursion.\nCheck if value of \"aux\" match with some condition: %u\n\n", aux);
+
+	printf("Type any key to continue...\n");
+	x = _getch();
+
+	//?
+	cycle = x;
+
+	//this will test the order traveled in recursion - will store a lot of 0 if the test for condition in recursion is not commented
+	std::ofstream oi("oi.txt");
+	for (x = 0; x < T; x++) {
+		y = testOrder[x];
+		oi << y << "\n";
+	}
+}
+
+
+
 //Recursion function
 void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigned int& cycle, unsigned short int& condition,
 	unsigned int* startPointPosition, unsigned int* positionCounter, unsigned int* aboveLevelCounterReminder,
 	unsigned int* belowLevelCounterReminder, unsigned short int* whereToSearchForCondition, bool& found,
-	unsigned char& loopRecyclableVariable, bool* positionOfFound) {
+	unsigned char& loopRecyclableVariable, bool* positionOfFound, unsigned int* testOrder) {
 
 	//Loop variable to this level
 	unsigned int* v = new unsigned int;
@@ -222,7 +335,19 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 			//this stores this level counter for below levels compare with
 			aboveLevelCounterReminder[level] = positionCounter[level] - v[0];
 
-			//condition test for incremented position
+			//test if the position has been processed
+			if (testOrder[x[0]] != 0) {
+				printf("algo errado no X");
+				aux = _getch();;
+			}
+			else if (testOrder[y[0]] != 0) {
+				printf("algo errado no Y");
+				aux = _getch();;
+			}
+			testOrder[x[0]] = x[0];
+			testOrder[y[0]] = y[0];
+
+			//condition test for incremented position - comment to view all testOrder file
 			if (whereToSearchForCondition[x[0]] == condition && positionOfFound[x[0]] == false) {
 
 				//store position (of incremented) where condition was found
@@ -232,7 +357,7 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 				found = true;
 			}
 
-			//condition test for decremented position
+			//condition test for decremented position - comment to view all testOrder file
 			else if (whereToSearchForCondition[y[0]] == condition && positionOfFound[y[0]] == false) {
 
 				//store position (of decremented) where condition was found
@@ -241,7 +366,7 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 			}
 
 			//check if this level counter is less then above and below counter to decide how is bigger if this test is true
-			else if (aboveLevelCounterReminder[level] < ct2[0] && aboveLevelCounterReminder[level] < ct3[0]) {
+			else if (aboveLevelCounterReminder[level] < ct2[0] && aboveLevelCounterReminder[level] < ct3[0]) { //remove "else" of "if" to testOrder
 
 				//then decides if close this level and return to above
 				if (ct3[0] <= ct2[0]) {
@@ -253,7 +378,7 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 				//or if suspend this level and enter below
 				else {
 					bestIsolatedPositionSearcher(level + 1, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder,
-						belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound);
+						belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, testOrder);
 					ct3[0] -= belowLevelCounterReminder[level];
 					x[0] < T - 1 ? x[0]++ : 0;
 					y[0] > 0 ? y[0]-- : 0;
@@ -262,7 +387,7 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 
 			//or if only below is bigger, then just go there
 			else if (aboveLevelCounterReminder[level] < ct3[0]) {
-				bestIsolatedPositionSearcher(level + 1, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound);
+				bestIsolatedPositionSearcher(level + 1, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, testOrder);
 				ct3[0] -= belowLevelCounterReminder[level];
 				x[0] < T - 1 ? x[0]++ : 0;
 				y[0] > 0 ? y[0]-- : 0;
@@ -300,16 +425,28 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 		unsigned int* ct3 = new unsigned int(positionCounter[level + 1]);
 		for (v[0] = 0; v[0] < positionCounter[level] && found == false; v[0]++) {
 			aboveLevelCounterReminder[level] = positionCounter[level] - v[0];
-			if (whereToSearchForCondition[x[0]] == condition && positionOfFound[x[0]] == false) {
+
+			if (testOrder[x[0]] != 0) {
+				printf("algo errado no X");
+				aux = _getch();;
+			}
+			else if (testOrder[y[0]] != 0) {
+				printf("algo errado no Y");
+				aux = _getch();;
+			}
+			testOrder[x[0]] = x[0];
+			testOrder[y[0]] = y[0];
+
+			if (whereToSearchForCondition[x[0]] == condition && positionOfFound[x[0]] == false) { //comment to view all testOrder file
 				aux = x[0];
 				found = true;
 			}
-			else if (whereToSearchForCondition[y[0]] == condition && positionOfFound[y[0]] == false) {
+			else if (whereToSearchForCondition[y[0]] == condition && positionOfFound[y[0]] == false) { //comment to view all testOrder file
 				aux = y[0];
 				found = true;
 			}
-			else if (aboveLevelCounterReminder[level] < ct3[0]) {
-				bestIsolatedPositionSearcher(level + 1, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound);
+			else if (aboveLevelCounterReminder[level] < ct3[0]) { //remove "else" of "if" to testOrder
+				bestIsolatedPositionSearcher(level + 1, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder, whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound, testOrder);
 				ct3[0] -= belowLevelCounterReminder[level];
 				x[0] < T - 1 ? x[0]++ : 0;
 				y[0] > 0 ? y[0]-- : 0;
@@ -331,15 +468,27 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 		unsigned int* ct2 = new unsigned int(positionCounter[level - 1] - (positionCounter[level - 1] - aboveLevelCounterReminder[level - 1]));
 		for (v[0] = belowLevelCounterReminder[level - 1]; v[0] < positionCounter[level] && found == false; v[0]++) {
 			aboveLevelCounterReminder[level] = positionCounter[level] - v[0];
-			if (whereToSearchForCondition[x[0]] == condition && positionOfFound[x[0]] == false) {
+
+			if (testOrder[x[0]] != 0) {
+				printf("algo errado no X");
+				aux = _getch();;
+			}
+			else if (testOrder[y[0]] != 0) {
+				printf("algo errado no Y");
+				aux = _getch();;
+			}
+			testOrder[x[0]] = x[0];
+			testOrder[y[0]] = y[0];
+
+			if (whereToSearchForCondition[x[0]] == condition && positionOfFound[x[0]] == false) { //comment to view all testOrder file
 				aux = x[0];
 				found = true;
 			}
-			else if (whereToSearchForCondition[y[0]] == condition && positionOfFound[y[0]] == false) {
+			else if (whereToSearchForCondition[y[0]] == condition && positionOfFound[y[0]] == false) { //comment to view all testOrder file
 				aux = y[0];
 				found = true;
 			}
-			else if (aboveLevelCounterReminder[level] >= ct2[0]) {
+			else if (aboveLevelCounterReminder[level] >= ct2[0]) { //remove "else" of "if" to testOrder
 				x[0] < T - 1 ? x[0]++ : 0;
 				y[0] > 0 ? y[0]-- : 0;
 			}
@@ -364,111 +513,7 @@ void bestIsolatedPositionSearcher(unsigned int level, unsigned int& aux, unsigne
 	delete v;
 }
 
-void runCycle(unsigned int level, unsigned int& aux, unsigned int& cycle, unsigned short int& condition,
-	unsigned int* startPointPosition, unsigned int* positionCounter, unsigned int* aboveLevelCounterReminder,
-	unsigned int* belowLevelCounterReminder, unsigned short int* whereToSearchForCondition, bool& found,
-	unsigned char& loopRecyclableVariable, bool* positionOfFound, unsigned int* positionCounterAux, unsigned int* startPointPositionAux,
-	unsigned int& x, unsigned int& y, unsigned int& z) {
 
-	//initializing
-	for (x = 0; x < aux - 1; x++) {
-		belowLevelCounterReminder[x] = 0;
-		aboveLevelCounterReminder[x] = 0;
-	}
-
-	//searching for all startingPointPosition and for all half distances (positionCounter) between positionOfFound (storing in aux versions)
-	unsigned int aux1, aux2, aux3;
-	aux1 = 0;
-	aux2 = 0;
-	aux3 = 0;
-	for (x = 0; x < T; x++) {
-		if (positionOfFound[x] == true) {
-			if (x == 0) {
-				startPointPositionAux[aux3] = 0;
-			}
-			else if (x == T - 1) {
-				if (aux1 % 2 == 0) {
-					aux1--;
-				}
-			}
-			aux2 = aux1 / 2;
-			aux1 = 0;
-			x == 0 ? 0 : startPointPositionAux[aux3] = x - aux2;
-			positionCounterAux[aux3] = aux2;
-			aux3++;
-		}
-		else {
-			aux1++;
-		}
-	}
-
-	//algorithim to consistently sorting positionCounter and startPointPosition (still using aux versions)
-	x = 1;
-	//aux -= 2;
-	while (x < aux) {
-		x = 3 * x + 1;
-	}
-	while (x > 0) {
-		for (aux1 = x; aux1 < aux; aux1++) {
-			y = positionCounterAux[aux1];
-			z = startPointPositionAux[aux1];
-			aux2 = aux1;
-			while (aux2 > x - 1 && y <= positionCounterAux[aux2 - x]) {
-				positionCounterAux[aux2] = positionCounterAux[aux2 - x];
-				startPointPositionAux[aux2] = startPointPositionAux[aux2 - x];
-				aux2 = aux2 - x;
-			}
-			positionCounterAux[aux2] = y;
-			startPointPositionAux[aux2] = z;
-		}
-		x = x / 3;
-	}
-	//aux += 2;
-
-	for (x = 0; x < aux; x++) {
-		y = positionCounterAux[x];
-		printf("%u\n", y);
-
-		y = startPointPositionAux[x];
-		printf("%u\n\n", y);
-	}
-	printf("\n\n\n");
-	//storing in "oficial" version of arrays (reason of use of aux versions)
-	for (x = 0, y = aux - 1; x < aux; x++, y--) {
-		positionCounter[x] = positionCounterAux[y];
-		startPointPosition[x] = startPointPositionAux[y];
-		z = positionCounter[x];
-		printf("%u\n", z);
-		z = startPointPosition[x];
-		printf("%u\n\n", z);
-	}
-
-	//no more need of aux versions
-	delete[] startPointPositionAux;
-	delete[] positionCounterAux;
-
-	//here "x" will save cycle
-	x = cycle;
-
-	//because...
-	cycle = aux - 1;
-
-	//and cycle will fit in the math of recursion! - RECURSION
-	printf("Before recursion\n...\n");
-
-	bestIsolatedPositionSearcher(0, aux, cycle, condition, startPointPosition, positionCounter, aboveLevelCounterReminder, belowLevelCounterReminder,
-		whereToSearchForCondition, found, loopRecyclableVariable, positionOfFound);
-
-	printf("After recursion.\nCheck if value of \"aux\" match with some condition: %u\n\n", aux);
-
-	printf("Type any key to continue...\n");
-
-	cycle = x;
-
-	x = _getch();
-
-	//do (or not) stuff you need or want with result data
-}
 
 //Need it more chewed? If yes, please chew more and return what you chewed!
 
